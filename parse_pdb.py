@@ -136,6 +136,12 @@ def fix_missing_res(pdb):
     fixer.addMissingAtoms()
     PDBFile.writeFile(fixer.topology, fixer.positions, file=open(f'{pdb}_fixed.pdb', 'w'))
 
+def find_pdb():
+    pass
+
+
+    # rcsb.count
+    #
 
 
 print("""
