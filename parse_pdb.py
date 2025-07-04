@@ -1,5 +1,3 @@
-from pdbfixer import PDBFixer
-from openmm.app import PDBFile
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import requests
@@ -130,6 +128,10 @@ def fix_lig(lig):
 
 
 def fix_missing_res(pdb):
+
+    from pdbfixer import PDBFixer
+    from openmm.app import PDBFile
+
     fixer = PDBFixer(filename=f"{pdb}.pdb")
     fixer.findMissingResidues()
     fixer.findMissingAtoms()
