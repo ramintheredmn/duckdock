@@ -1,6 +1,7 @@
 import biotite.database.rcsb as rcsb
 import redo
 import pypdb
+import pandas as pd
 
 def get_pdb(uniprot_id, exp_method="X-RAY DIFFRACTION", max_res=3, min_ligand_w=100):
 
@@ -33,9 +34,49 @@ def describe_one_pdb_id(pdb_id):
         raise ValueError(f"Could not fetch PDB id {pdb_id}")
     return described
 
-uniprot_id = input("Enter the uniprot id of the protein of interest: ")
-pdb_ids = get_pdb(uniprot_id)
-pdb_descs = [describe_one_pdb_id(pdb_id) for pdb_id in pdb_ids]
+def extract_pdb_info(pdb_metadata_list):
+    results = []
+    
+    for metadata in pdb_metadata_list:
+        pdb_id = metadata.get('rcsb_id', 'Unknown')  # Get PDB ID
+        
+        resolution = 'N/A'
+        ligand_count = 0
+        ligand_names = []
+        
+        if 'rcsb_entry_info' in metadata and 'resolution_combined' in metadata['rcsb_entry_info']:
+            resolution = metadata['rcsb_entry_info']['resolution_combined'][0] if metadata['rcsb_entry_info']['resolution_combined'] else 'N/A'
+        elif 'rcsb_entry_info' in metadata and 'diffrn_resolution_high' in metadata['rcsb_entry_info']:
+            resolution = metadata['rcsb_entry_info']['diffrn_resolution_high'].get('value', 'N/A')
+        
+        if 'rcsb_entry_info' in metadata:
+            ligand_count = metadata['rcsb_entry_info'].get('nonpolymer_entity_count', 0)
+        
+        if 'rcsb_binding_affinity' in metadata:
+            ligand_names = list(set([entry['comp_id'] for entry in metadata['rcsb_binding_affinity']]))
 
-for desc in pdb_descs[:3]:
-    print(desc)
+        if 'rcsb_entry_info' in metadata:
+            num_chains = metadata['rcsb_entry_info'].get('deposited_polymer_entity_instance_count', 0)
+        else:
+            num_chains = None
+
+        results.append({
+            'pdb_id': pdb_id,
+            'resolution': resolution,
+            'ligand_count': ligand_count,
+            'ligand_names': ', '.join(ligand_names) if ligand_names else 'None',
+            'num_chains': num_chains
+        })
+    
+    return results
+
+
+uniprot_id = input("Enter the uniprot id of the protein of interest: ")
+pdbs = get_pdb(uniprot_id)
+pdb_descs = [describe_one_pdb_id(pdb_id) for pdb_id in pdbs]
+res = extract_pdb_info(pdb_descs)
+df = pd.DataFrame.from_dict(res)
+df_m = df.query("ligand_names != 'None' and ligand_count >= 1")
+print(df_m)
+
+
