@@ -2,6 +2,7 @@ import biotite.database.rcsb as rcsb
 import redo
 import pypdb
 import pandas as pd
+import inquirer
 
 def get_pdb(uniprot_id, exp_method="X-RAY DIFFRACTION", max_res=3, min_ligand_w=100):
 
@@ -77,6 +78,15 @@ pdb_descs = [describe_one_pdb_id(pdb_id) for pdb_id in pdbs]
 res = extract_pdb_info(pdb_descs)
 df = pd.DataFrame.from_dict(res)
 df_m = df.query("ligand_names != 'None' and ligand_count >= 1")
-print(df_m)
 
+choises = [f"{i[0]}) {i[1]['pdb_id']}, resulotion: {i[1]['resolution']}, Ligand: {i[1]['ligand_names']}" for i in df_m.iterrows()]
 
+questions = [inquirer.List(
+    'row',
+    message='Select a protein',
+    choices=choises,
+)]
+
+answer = inquirer.prompt(questions)
+
+print(answer)

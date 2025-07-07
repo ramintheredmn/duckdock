@@ -1,7 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import requests
-import sys
 from collections import namedtuple
 
 Missing = namedtuple('Missing', ["ifmissing", "missing_ress", "num_per_chain"])
@@ -35,7 +34,7 @@ def sep_lig_rec(pdb):
                     missing_res.missing_ress.append(missing_residue)
             if line.startswith('HET   '):
                 parts = line.split()
-                ligands.append(Ligand(name=parts[1], numatom=parts[4], chain=parts[2], syn=[]))
+                ligands.append(Ligand(name=parts[1], numatom=parts[-1], chain=parts[2], syn=[]))
             if line.startswith('HETNAM') or line.startswith('HETSYN'):
                 parts = line.split()
                 for ligand in ligands:
@@ -85,7 +84,7 @@ def sep_lig_rec(pdb):
 
         for ligand in ligands:
             if len(chain) > 1:
-                if ligand.chain == chosen_chain:
+                if ligand.chain == chosen_chain or ligand.chain[0] == chosen_chain:
                     print(f"{ligand.name}, number of atoms: {ligand.numatom}, synonyms: {ligand.syn}")
             else:
                 print(f"{ligand.name}, number of atoms: {ligand.numatom}, synonyms: {ligand.syn}")
@@ -99,7 +98,7 @@ def sep_lig_rec(pdb):
                 if line.startswith(('HETATM', 'ATOM')) and chosen_lig in line:
                     if chosen_chain:
                         line_chain = line[21] if len(line) > 21 else ' '
-                        if line_chain == chosen_chain:
+                        if line_chain == chosen_chain or line_chain[0] == chosen_chain:
                             ligand_lines.append(line)
                     else:
                         ligand_lines.append(line)
