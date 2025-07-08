@@ -79,7 +79,7 @@ res = extract_pdb_info(pdb_descs)
 df = pd.DataFrame.from_dict(res)
 df_m = df.query("ligand_names != 'None' and ligand_count >= 1")
 
-choises = [f"{i[0]}) {i[1]['pdb_id']}, resulotion: {i[1]['resolution']}, Ligand: {i[1]['ligand_names']}" for i in df_m.iterrows()]
+choises = [f"{i[0]}) {i[1]['pdb_id']}, resulotion: {i[1]['resolution']}, Chain count: {i[1]['num_chains']}, Ligand: {i[1]['ligand_names']}" for i in df_m.iterrows()]
 
 questions = [inquirer.List(
     'row',
