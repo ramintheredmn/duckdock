@@ -3,6 +3,7 @@ import redo
 import pypdb
 import pandas as pd
 import inquirer
+import requests
 
 @redo.retriable(attempts=10, sleeptime=2)
 def get_pdb(uniprot_id, exp_method="X-RAY DIFFRACTION", max_res=float(3), min_ligand_w=100, max_chain=None):
@@ -44,6 +45,7 @@ def get_pdb(uniprot_id, exp_method="X-RAY DIFFRACTION", max_res=float(3), min_li
 def describe_one_pdb_id(pdb_id):
     """Fetch meta information from PDB."""
     described = pypdb.describe_pdb(pdb_id)
+    print(f"fetched metadata for pdb_id {pdb_id}")
     if described is None:
         print(f"! Error while fetching {pdb_id}, retrying ...")
         raise ValueError(f"Could not fetch PDB id {pdb_id}")
@@ -85,6 +87,12 @@ def extract_pdb_info(pdb_metadata_list):
     
     return results
 
+def download_pdb(pdbid):
+    res = requests.get(f"https://files.rcsb.org/download/{pdbid}.pdb")
+    with open(f"{pdbid}.pdb", 'w') as f:
+        f.write(res.text)
+
+
 max_res = input("Enter the max resolution you want: (empty for 3) ")
 max_chain = input("Enter the max number of chains: (empty for not limiting) ")
 uniprot_id = input("Enter the uniprot id of the protein of interest: ")
@@ -98,10 +106,10 @@ elif len(max_chain) >= 1:
 else:
     pdbs = get_pdb(uniprot_id)
 
-pdb_descs = [describe_one_pdb_id(pdb_id) for pdb_id in pdbs]
+pdb_descs = [describe_one_pdb_id(pdb_id) for pdb_id in pdbs[:2]]
 res = extract_pdb_info(pdb_descs)
 df = pd.DataFrame.from_dict(res)
-df_m = df.query("ligand_names != 'None' and ligand_count >= 1").reset_index(drop=True)
+df_m = df.query("ligand_names != 'None' and ligand_count >= 1").reset_index(drop=True).sort_values('resolution')
 
 choises = [f"{i[0]}) {i[1]['pdb_id']}, resulotion: {i[1]['resolution']}, Chain count: {i[1]['num_chains']}, Ligand: {i[1]['ligand_names']}" for i in df_m.iterrows()]
 
@@ -113,5 +121,8 @@ questions = [inquirer.List(
 
 answer= inquirer.prompt(questions)
 
-print(answer.values()[0].split(')')[0])
+chosen = df_m['pdb_id'].to_list()[int(list(answer.values())[0].split(')')[0])]
+print(f"the pdb id you have choseen is {chosen}")
+download_pdb(chosen)
+
 
