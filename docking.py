@@ -15,7 +15,7 @@ autodock_parameter_version 4.2       # used by autodock to validate parameter se
 outlev 1                             # diagnostic output level
 intelec                              # calculate internal electrostatics
 seed pid time                        # seeds for random generator
-ligand_types HD C A N NA OA F P SA S Cl Br I Si B
+ligand_types HD C A N NA OA F P SA S Cl Br I
 fld r.maps.fld                       # grid_data_file
 map r.HD.map
 map r.C.map

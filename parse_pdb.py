@@ -42,29 +42,56 @@ def sep_lig_rec(pdb):
                         for item in parts[1:]:
                             ligand.syn.append(item)
                         ligand.syn.sort()
-        
-        for chain_ in chain:
+
+
+        if len(chain) == 0:
             missing_in_chain_ = []
             for missing in missing_res.missing_ress:
-                if missing.chain == chain_:
-                    missing_in_chain_.append((missing.name, missing.num))
-            missing_res.num_per_chain.append((chain_, len(missing_in_chain_)))
+                missing_in_chain_.append((missing.name, missing.num))
+            missing_res.num_per_chain.append(('A', len(missing_in_chain_)))
+        else:
+            for chain_ in chain:
+                missing_in_chain_ = []
+                for missing in missing_res.missing_ress:
+                    if missing.chain == chain_:
+                        missing_in_chain_.append((missing.name, missing.num))
+                missing_res.num_per_chain.append((chain_, len(missing_in_chain_)))
 
         print(title)
         print(res)
         print(chain)
-        if missing_res.ifmissing:
+        if missing_res.ifmissing and missing_res.num_per_chain:
             print("There are missing residues")
             for chain__ in missing_res.num_per_chain:
                 print(f"for chain {chain__[0]}: {chain__[1]}")
 
-        chosen_chain = 'A'
-        if len(chain) > 1:
-            chosen_chain = input(f"Choose the chain you want {chain}: ")
-            print("you have chosen the chain, ", chosen_chain)
-            # Create cleaned PDB with headers preserved
+        chosen_chain = None
+        if len(chain) != 0:
+            chosen_chain = 'A'
+            if len(chain) > 1:
+                chosen_chain = input(f"Choose the chain you want {chain}: ")
+                print("you have chosen the chain, ", chosen_chain)
+                # Create cleaned PDB with headers preserved
+                with open(f"{pdb.split('.')[0]}_cleaned.pdb", 'w') as f:
+                    # Write all header lines first
+                    for line in lines:
+                        if line.startswith(('HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS', 
+                                          'EXPDTA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK', 
+                                          'DBREF', 'SEQADV', 'SEQRES', 'HET   ', 'HETNAM', 
+                                          'HETSYN', 'FORMUL', 'CRYST1', 'ORIGX', 'SCALE')):
+                            f.write(line)
+                    
+                    # Write ATOM records for chosen chain
+                    for line in lines:
+                        if line.startswith('ATOM'):
+                            if line.split()[4] == chosen_chain:
+                                f.write(line)
+                    
+                    # Write END record
+                    f.write('END\n')
+                    f.close()
+        else:
             with open(f"{pdb.split('.')[0]}_cleaned.pdb", 'w') as f:
-                # Write all header lines first
                 for line in lines:
                     if line.startswith(('HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS', 
                                       'EXPDTA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK', 
@@ -72,15 +99,13 @@ def sep_lig_rec(pdb):
                                       'HETSYN', 'FORMUL', 'CRYST1', 'ORIGX', 'SCALE')):
                         f.write(line)
                 
-                # Write ATOM records for chosen chain
                 for line in lines:
                     if line.startswith('ATOM'):
-                        if line.split()[4] == chosen_chain:
-                            f.write(line)
+                        f.write(line)
                 
-                # Write END record
                 f.write('END\n')
                 f.close()
+
 
         for ligand in ligands:
             if len(chain) > 1:
