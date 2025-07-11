@@ -66,3 +66,6 @@ analysis                             # perform a ranked cluster analysis
 def make_pdbqt_gpf(rc, lg, extra_atoms=[]):
     command = f"mk_prepare_receptor.py --read_pdb {rc} -o r -p -v -g --box_enveloping {lg} --padding 5 -a --default_altloc A"
     subprocess.run(command)
+
+def edit_rgpf(rgpf):
+    pass
